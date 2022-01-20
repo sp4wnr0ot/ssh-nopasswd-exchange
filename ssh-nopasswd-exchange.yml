@@ -1,0 +1,43 @@
+- name: Adding {user, ssh key, sudo}
+  hosts: all
+  tasks:
+    - name: Add user sacaccount accenture
+      action: user name=sacaccount group=1000 state=present
+
+    - name: Add sudoers users to wheel group
+      user: name=sacaccount groups=wheel append=yes state=present 
+
+    - name: ssh key gen sacaccount
+      become: yes
+      become_user: sacaccount 
+      shell: >
+        ssh-keygen -q -b 2048 -t rsa -N "" -C "creating SSH" -f ~/.ssh/id_rsa
+        creates="~/.ssh/id_rsa"
+
+    - name: Fetch all public ssh keys
+      become: yes
+      become_user: sacaccount 
+      shell: cat ~/.ssh/id_rsa.pub
+      register: ssh_keys
+      tags:
+        - ssh
+
+    - name: Check keys
+      become: yes
+      become_user: sacaccount 
+  
+      debug: msg={{ ssh_keys.stdout }}
+      tags:
+        - ssh
+
+    - name: Deploy keys on all servers
+      become: yes
+      become_user: sacaccount 
+   
+      authorized_key: user=sacaccount key="{{ item[0] }}"
+      delegate_to: "{{ item[1] }}"
+      with_nested:
+        - "{{ ssh_keys.stdout }}"
+        - "{{groups['all']}}"
+      tags:
+        - ssh
