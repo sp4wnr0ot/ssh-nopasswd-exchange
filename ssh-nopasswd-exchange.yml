@@ -1,7 +1,7 @@
 - name: Adding {user, ssh key, sudo}
   hosts: all
   tasks:
-    - name: Add user sacaccount accenture
+    - name: Add user sacaccount demo purpose
       action: user name=sacaccount group=1000 state=present
 
     - name: Add sudoers users to wheel group
